@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de Frases</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #display {
+            font-size: 1.5em;
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            background-color: #f9f9f9;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leitor de Frases</h1>
+    <div id="display">Clique em "Iniciar" para começar a leitura.</div>
+    <button id="startButton">Iniciar</button>
+
+    <script>
+        const filePath = 'voz.xlsx';
+        let phrases = [];
+        let currentIndex = 0;
+
+        async function loadExcelData() {
+            const response = await fetch(filePath);
+            const arrayBuffer = await response.arrayBuffer();
+
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+            // Ignora a primeira linha se for cabeçalho
+            phrases = json.slice(1).map(row => ({
+                english: row[0],
+                translation: row[1]
+            }));
+        }
+
+        function displayNextPhrase() {
+            if (phrases.length === 0) return;
+
+            const { english, translation } = phrases[currentIndex];
+            const display = document.getElementById('display');
+            
+            display.innerHTML = `<strong>Inglês:</strong> ${english}<br><strong>Tradução:</strong> ${translation}`;
+
+            currentIndex++;
+            if (currentIndex >= phrases.length) {
+                currentIndex = 0; // Reinicia o ciclo
+            }
+        }
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            if (phrases.length > 0) {
+                displayNextPhrase();
+            } else {
+                loadExcelData().then(() => {
+                    displayNextPhrase();
+                });
+            }
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
