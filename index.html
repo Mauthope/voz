@@ -49,6 +49,7 @@
         let currentIndex = 0;
         let autoInterval;
         let isAutoMode = false; // Variável para controlar o modo automático
+        let isSpeaking = false; // Controle para verificar se a leitura está em andamento
 
         async function loadExcelData() {
             const response = await fetch(filePath);
@@ -66,30 +67,45 @@
             }));
         }
 
-        function speak(text, lang) {
+        function speak(text, lang, callback) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;  // Define o idioma da fala
+
+            // Quando a fala terminar, chama a função callback para passar para a próxima frase
+            utterance.onend = callback;
+
             speechSynthesis.speak(utterance);  // Reproduz a fala
         }
 
         function displayNextPhrase() {
-            if (phrases.length === 0) return;
+            if (phrases.length === 0 || isSpeaking) return; // Não passa para a próxima frase se já estiver falando
 
             const { english, translation } = phrases[currentIndex];
             const display = document.getElementById('display');
             
             display.innerHTML = `<strong>Inglês:</strong> ${english}<br><strong>Tradução:</strong> ${translation}`;
 
-            // Fala a frase em inglês
-            speak(english, 'en-US');
-            
-            // Fala a tradução em português
-            speak(translation, 'pt-BR');
+            // Marca que está falando
+            isSpeaking = true;
 
-            currentIndex++;
-            if (currentIndex >= phrases.length) {
-                currentIndex = 0; // Reinicia o ciclo
-            }
+            // Fala a frase em inglês
+            speak(english, 'en-US', () => {
+                // Fala a tradução em português após terminar a frase em inglês
+                speak(translation, 'pt-BR', () => {
+                    // Quando terminar de falar, marca que terminou
+                    isSpeaking = false;
+
+                    currentIndex++;
+                    if (currentIndex >= phrases.length) {
+                        currentIndex = 0; // Reinicia o ciclo
+                    }
+
+                    if (isAutoMode) {
+                        // Se estiver no modo automático, chama a função para passar para a próxima frase
+                        autoInterval = setTimeout(displayNextPhrase, 5000); // Atraso de 5 segundos antes de passar para a próxima
+                    }
+                });
+            });
         }
 
         document.getElementById('startButton').addEventListener('click', () => {
@@ -106,29 +122,25 @@
             if (phrases.length > 0) {
                 if (isAutoMode) {
                     // Para o modo automático
-                    clearInterval(autoInterval);
+                    clearTimeout(autoInterval);
                     isAutoMode = false;
                     document.getElementById('autoButton').textContent = "Frases Automáticas"; // Muda o texto do botão
                 } else {
                     // Inicia o modo automático
-                    autoInterval = setInterval(() => {
-                        displayNextPhrase();
-                    }, 5000); // Passa as frases a cada 5 segundos
                     isAutoMode = true;
                     document.getElementById('autoButton').textContent = "Parar Frases Automáticas"; // Altera o texto do botão
+                    displayNextPhrase(); // Começa a exibição automática
                 }
             } else {
                 loadExcelData().then(() => {
                     if (isAutoMode) {
-                        clearInterval(autoInterval);
+                        clearTimeout(autoInterval);
                         isAutoMode = false;
                         document.getElementById('autoButton').textContent = "Frases Automáticas";
                     } else {
-                        autoInterval = setInterval(() => {
-                            displayNextPhrase();
-                        }, 5000);
                         isAutoMode = true;
                         document.getElementById('autoButton').textContent = "Parar Frases Automáticas";
+                        displayNextPhrase(); // Começa a exibição automática
                     }
                 });
             }
