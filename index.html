@@ -63,6 +63,12 @@
             }));
         }
 
+        function speak(text, lang) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;  // Define o idioma da fala
+            speechSynthesis.speak(utterance);  // Reproduz a fala
+        }
+
         function displayNextPhrase() {
             if (phrases.length === 0) return;
 
@@ -70,6 +76,12 @@
             const display = document.getElementById('display');
             
             display.innerHTML = `<strong>Inglês:</strong> ${english}<br><strong>Tradução:</strong> ${translation}`;
+
+            // Fala a frase em inglês
+            speak(english, 'en-US');
+            
+            // Fala a tradução em português
+            speak(translation, 'pt-BR');
 
             currentIndex++;
             if (currentIndex >= phrases.length) {
