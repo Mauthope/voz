@@ -48,7 +48,7 @@
         let phrases = [];
         let currentIndex = 0;
         let autoInterval;
-        let isAutoRunning = false; // Controla o estado do ciclo automático
+        let isAutoMode = false; // Variável para controlar o modo automático
 
         async function loadExcelData() {
             const response = await fetch(filePath);
@@ -103,28 +103,34 @@
         });
 
         document.getElementById('autoButton').addEventListener('click', () => {
-            if (isAutoRunning) {
-                // Se já está rodando, limpa o intervalo e altera o estado
-                clearInterval(autoInterval);
-                isAutoRunning = false;
-                document.getElementById('autoButton').textContent = 'Frases Automáticas'; // Muda o texto do botão
-            } else {
-                // Se não está rodando, começa o intervalo
-                if (phrases.length > 0) {
+            if (phrases.length > 0) {
+                if (isAutoMode) {
+                    // Para o modo automático
+                    clearInterval(autoInterval);
+                    isAutoMode = false;
+                    document.getElementById('autoButton').textContent = "Frases Automáticas"; // Muda o texto do botão
+                } else {
+                    // Inicia o modo automático
                     autoInterval = setInterval(() => {
                         displayNextPhrase();
                     }, 5000); // Passa as frases a cada 5 segundos
-                    isAutoRunning = true;
-                    document.getElementById('autoButton').textContent = 'Parar Frases Automáticas'; // Muda o texto do botão
-                } else {
-                    loadExcelData().then(() => {
+                    isAutoMode = true;
+                    document.getElementById('autoButton').textContent = "Parar Frases Automáticas"; // Altera o texto do botão
+                }
+            } else {
+                loadExcelData().then(() => {
+                    if (isAutoMode) {
+                        clearInterval(autoInterval);
+                        isAutoMode = false;
+                        document.getElementById('autoButton').textContent = "Frases Automáticas";
+                    } else {
                         autoInterval = setInterval(() => {
                             displayNextPhrase();
                         }, 5000);
-                        isAutoRunning = true;
-                        document.getElementById('autoButton').textContent = 'Parar Frases Automáticas'; // Muda o texto do botão
-                    });
-                }
+                        isAutoMode = true;
+                        document.getElementById('autoButton').textContent = "Parar Frases Automáticas";
+                    }
+                });
             }
         });
     </script>
