@@ -51,6 +51,7 @@
         let isAutoMode = false; // Variável para controlar o modo automático
         let isSpeaking = false; // Controle para verificar se a leitura está em andamento
 
+        // Carregar as frases do Excel e o índice salvo
         async function loadExcelData() {
             const response = await fetch(filePath);
             const arrayBuffer = await response.arrayBuffer();
@@ -65,8 +66,18 @@
                 english: row[0],
                 translation: row[1]
             }));
+
+            // Carrega o índice salvo ou inicia no 0
+            const savedIndex = localStorage.getItem('currentIndex');
+            currentIndex = savedIndex ? parseInt(savedIndex, 10) : 0;
         }
 
+        // Salvar o índice atual no localStorage
+        function saveCurrentIndex() {
+            localStorage.setItem('currentIndex', currentIndex);
+        }
+
+        // Função de fala com controle de callback
         function speak(text, lang, callback) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;  // Define o idioma da fala
@@ -77,6 +88,7 @@
             speechSynthesis.speak(utterance);  // Reproduz a fala
         }
 
+        // Exibir a próxima frase
         function displayNextPhrase() {
             if (phrases.length === 0 || isSpeaking) return; // Não passa para a próxima frase se já estiver falando
 
@@ -100,9 +112,12 @@
                         currentIndex = 0; // Reinicia o ciclo
                     }
 
+                    // Salva o índice no localStorage
+                    saveCurrentIndex();
+
                     if (isAutoMode) {
                         // Se estiver no modo automático, chama a função para passar para a próxima frase
-                        autoInterval = setTimeout(displayNextPhrase, 3000); // Atraso de 3 segundos antes de passar para a próxima
+                        autoInterval = setTimeout(displayNextPhrase, 5000); // Atraso de 5 segundos antes de passar para a próxima
                     }
                 });
             });
