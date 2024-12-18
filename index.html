@@ -48,6 +48,7 @@
         let phrases = [];
         let currentIndex = 0;
         let autoInterval;
+        let isAutoRunning = false; // Controla o estado do ciclo automático
 
         async function loadExcelData() {
             const response = await fetch(filePath);
@@ -102,21 +103,28 @@
         });
 
         document.getElementById('autoButton').addEventListener('click', () => {
-            if (phrases.length > 0) {
-                // Limpa qualquer intervalo anterior
+            if (isAutoRunning) {
+                // Se já está rodando, limpa o intervalo e altera o estado
                 clearInterval(autoInterval);
-
-                // Exibe e lê as frases a cada 5 segundos
-                autoInterval = setInterval(() => {
-                    displayNextPhrase();
-                }, 5000); // 5000 ms = 5 segundos
+                isAutoRunning = false;
+                document.getElementById('autoButton').textContent = 'Frases Automáticas'; // Muda o texto do botão
             } else {
-                loadExcelData().then(() => {
-                    // Inicia o ciclo automático após carregar as frases
+                // Se não está rodando, começa o intervalo
+                if (phrases.length > 0) {
                     autoInterval = setInterval(() => {
                         displayNextPhrase();
-                    }, 5000);
-                });
+                    }, 5000); // Passa as frases a cada 5 segundos
+                    isAutoRunning = true;
+                    document.getElementById('autoButton').textContent = 'Parar Frases Automáticas'; // Muda o texto do botão
+                } else {
+                    loadExcelData().then(() => {
+                        autoInterval = setInterval(() => {
+                            displayNextPhrase();
+                        }, 5000);
+                        isAutoRunning = true;
+                        document.getElementById('autoButton').textContent = 'Parar Frases Automáticas'; // Muda o texto do botão
+                    });
+                }
             }
         });
     </script>
