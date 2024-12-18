@@ -41,11 +41,13 @@
     <h1>Leitor de Frases</h1>
     <div id="display">Clique em "Iniciar" para começar a leitura.</div>
     <button id="startButton">Iniciar</button>
+    <button id="autoButton">Frases Automáticas</button>
 
     <script>
         const filePath = 'voz.xlsx';
         let phrases = [];
         let currentIndex = 0;
+        let autoInterval;
 
         async function loadExcelData() {
             const response = await fetch(filePath);
@@ -95,6 +97,25 @@
             } else {
                 loadExcelData().then(() => {
                     displayNextPhrase();
+                });
+            }
+        });
+
+        document.getElementById('autoButton').addEventListener('click', () => {
+            if (phrases.length > 0) {
+                // Limpa qualquer intervalo anterior
+                clearInterval(autoInterval);
+
+                // Exibe e lê as frases a cada 5 segundos
+                autoInterval = setInterval(() => {
+                    displayNextPhrase();
+                }, 5000); // 5000 ms = 5 segundos
+            } else {
+                loadExcelData().then(() => {
+                    // Inicia o ciclo automático após carregar as frases
+                    autoInterval = setInterval(() => {
+                        displayNextPhrase();
+                    }, 5000);
                 });
             }
         });
