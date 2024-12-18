@@ -51,34 +51,51 @@
         let isAutoMode = false; // Variável para controlar o modo automático
         let isSpeaking = false; // Controle para verificar se a leitura está em andamento
 
+        // Verificar suporte para SpeechSynthesis
+        if (!('speechSynthesis' in window)) {
+            alert('Seu navegador não suporta leitura de voz.');
+        }
+
         // Carregar as frases do Excel e o índice salvo
         async function loadExcelData() {
-            const response = await fetch(filePath);
-            const arrayBuffer = await response.arrayBuffer();
+            try {
+                const response = await fetch(filePath);
+                const arrayBuffer = await response.arrayBuffer();
 
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            // Ignora a primeira linha se for cabeçalho
-            phrases = json.slice(1).map(row => ({
-                english: row[0],
-                translation: row[1]
-            }));
+                // Ignora a primeira linha se for cabeçalho
+                phrases = json.slice(1).map(row => ({
+                    english: row[0],
+                    translation: row[1]
+                }));
 
-            // Carrega o índice salvo ou inicia no 0
-            const savedIndex = localStorage.getItem('currentIndex');
-            currentIndex = savedIndex ? parseInt(savedIndex, 10) : 0;
+                // Carrega o índice salvo ou inicia no 0
+                const savedIndex = localStorage.getItem('currentIndex');
+                currentIndex = savedIndex ? parseInt(savedIndex, 10) : 0;
+            } catch (error) {
+                alert('Erro ao carregar as frases: ' + error.message);
+            }
         }
 
         // Salvar o índice atual no localStorage
         function saveCurrentIndex() {
-            localStorage.setItem('currentIndex', currentIndex);
+            try {
+                localStorage.setItem('currentIndex', currentIndex);
+            } catch (error) {
+                alert('Erro ao salvar o índice: ' + error.message);
+            }
         }
 
         // Função de fala com controle de callback
         function speak(text, lang, callback) {
+            if (!('speechSynthesis' in window)) {
+                return;
+            }
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;  // Define o idioma da fala
 
